@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import uuid
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import func, select
@@ -71,8 +72,10 @@ def bootstrap_database(db: Session, settings: Settings) -> None:
         for uname, email, role in demo_accounts:
             existing_user = db.execute(select(User).where(User.username == uname)).scalar_one_or_none()
             if existing_user is None:
+                deterministic_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"aegisvault.demo.{uname}"))
                 db.add(
                     User(
+                        id=deterministic_id,
                         username=uname,
                         email=email,
                         hashed_password=hash_password(settings.demo_user_password),

@@ -86,7 +86,12 @@ export const apiClient = {
     request<SecurityEvent[]>(`/events?limit=${limit}`, {}, token),
 
   simulateAttack: (token: string, scenario: AttackScenario, count = 8, region = "us-east") =>
-    request<{ scenario: AttackScenario; events_enqueued: number; stream_ids: string[] }>(
+    request<{
+      scenario: AttackScenario;
+      events_enqueued: number;
+      stream_ids: string[];
+      created_alerts?: Alert[];
+    }>(
       "/events/simulate",
       { method: "POST", body: JSON.stringify({ scenario, count, region }) },
       token

@@ -81,6 +81,7 @@ class SimulateAttackResponse(BaseModel):
     scenario: AttackScenario
     events_enqueued: int
     stream_ids: list[str]
+    created_alerts: list[AlertOut] = Field(default_factory=list)
 
 
 class SecurityEventOut(BaseModel):

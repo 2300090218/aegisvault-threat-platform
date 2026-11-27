@@ -13,6 +13,7 @@ from app.core.security import UserRole
 from app.detection.engine import ThreatDetectionEngine
 from app.models.db import SecurityEvent, User
 from app.models.schemas import (
+    AlertOut,
     IngestResponse,
     RawSecurityEventIn,
     SecurityEventOut,
@@ -87,6 +88,7 @@ async def simulate_attack(
     settings: Settings = Depends(get_app_settings),
     current_user: User = Depends(require_roles(UserRole.ANALYST, UserRole.ADMIN)),
 ) -> SimulateAttackResponse:
+    created_alerts: list[AlertOut] = []
     if settings.stream_mode == "inline":
         events = build_attack_events(
             payload.scenario,
@@ -99,7 +101,7 @@ async def simulate_attack(
         intel = load_known_bad_hashes(db)
         for ev in events:
             stream_ids.append(await broker.publish_raw_event(ev))
-            process_raw_event(
+            _, alerts_out = process_raw_event(
                 db,
                 settings=settings,
                 pseudonymizer=pseudonymizer,
@@ -107,6 +109,7 @@ async def simulate_attack(
                 raw_payload=ev,
                 known_bad_hashes=intel,
             )
+            created_alerts.extend(alerts_out)
     else:
         stream_ids = await enqueue_scenario(
             broker,
@@ -128,4 +131,5 @@ async def simulate_attack(
         scenario=payload.scenario,
         events_enqueued=len(stream_ids),
         stream_ids=stream_ids,
+        created_alerts=created_alerts,
     )

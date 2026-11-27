@@ -138,7 +138,15 @@ export function DashboardPage() {
     try {
       const res = await apiClient.simulateAttack(token, selectedScenario, 8, "us-east");
       setSimNotice(`Enqueued ${res.events_enqueued} '${res.scenario}' events into stream.`);
-      await loadSnapshot();
+      if (res.created_alerts && res.created_alerts.length > 0) {
+        setAlerts((prev) => {
+          const existingIds = new Set(prev.map((a) => a.id));
+          const fresh = res.created_alerts!.filter((a) => !existingIds.has(a.id));
+          return [...fresh, ...prev].slice(0, 50);
+        });
+      } else {
+        await loadSnapshot();
+      }
     } finally {
       setSimulating(false);
     }
